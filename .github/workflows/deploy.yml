@@ -25,6 +25,9 @@ jobs:
 
   deploy:
     name: Deploy to Production VPS
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -43,7 +46,7 @@ jobs:
             docker compose exec -T next-server npx prisma migrate deploy || echo "Migrations skipped or service name needs adjustment"
             docker compose ps
       - name: Send Telegram Notification Success
-        if: success() && secrets.TELEGRAM_BOT_TOKEN !=''
+        if: success() && env.TELEGRAM_BOT_TOKEN != ''
         uses: appleboy/telegram-action@v0.1.2
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -54,7 +57,7 @@ jobs:
             👤 Автор: ${{ github.actor }}
             🔗 Коммит: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
       - name: Send Telegram Notification on Failure
-        if: failure() && secrets.TELEGRAM_BOT_TOKEN != ''
+        if: failure() && env.TELEGRAM_BOT_TOKEN != ''
         uses: appleboy/telegram-action@v0.1.2
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
