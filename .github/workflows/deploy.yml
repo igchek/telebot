@@ -18,6 +18,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/apps/svibes/telebot
+            cd /root/apps/svibes/telebot
             git pull
             docker compose up -d --build
