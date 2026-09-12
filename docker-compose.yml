@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: svibes_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: svibes_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  next-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: svibes_next_server
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/svibes_db?schema=public
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - postgres
+    command: npm run dev
+    restart: always
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    container_name: svibes_telegram_bot
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/svibes_db?schema=public
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    command: npm run bot
+    restart: always
+    
+
+volumes:
+  pgdata:

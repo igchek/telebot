@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+
+model Artist {
+  id          Int     @id @default(autoincrement())
+  name        String
+  bio         String?
+  fixedAmount Int?    // фиксированная сумма из S-конфига
+  percent     Int?    // процент от выручки
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contents    Content[]
+  pools       Pool[]
+}
+
+model Content {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  type        String    
+  price       Int?       // базовая цена билета
+  artistId    Int
+  artist      Artist     @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  pools       Pool[]
+  votes       Vote[]
+}
+
+model Pool {
+  id            Int      @id @default(autoincrement())
+  name          String
+  geo           String     
+  status        String     
+  targetAmount  Int?
+  currentAmount Int      @default(0)
+  orm           Int        
+  startDate     DateTime?
+  endDate       DateTime?
+  artistId      Int?      
+  
+  
+  artist        Artist?   @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  contents      Content[]
+  votes         Vote[]
+  escrowConfig  EscrowConfig?
+}
+
+model Vote {
+  id       Int   @id @default(autoincrement())
+  userId   String  
+  poolId   Int
+  pool     Pool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  contentId Int?
+  content  Content? @relation(fields: [contentId], references: [id])
+  choice   String   
+  votedAt  DateTime @default(now())
+}
+
+model EscrowConfig {
+  id        Int   @id @default(autoincrement())
+  poolId    Int   @unique
+  pool      Pool  @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  amount    Int
+  releaseCondition String 
+}
