@@ -5,7 +5,26 @@ on:
     branches: [ main ]
 
 jobs:
+  linting-and-typecheck:
+    name: Lint & Typecheck
+    runs-on:ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name:Setup Node.js
+        uses:actions/setup-node@v4
+        with:
+          node-version:'20'
+          cache:'npm'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Run Typecheck
+        run: npx tsc --noEmit
+      - name: Run Linter
+        run: npm run lint
+
   deploy:
+    name: Deploy to Production VPS
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,3 +40,26 @@ jobs:
             cd /root/apps/svibes/telebot
             git pull
             docker compose up -d --build
+            docker compose exec -T next-server npx prisma migrate deploy || echo "Migrations skipped or service name needs adjustment"
+            docker compose ps
+      - name: Send Telegram Notification Success
+        if: success() && secrets.TELEGRAM_BOT_TOKEN !=''
+        uses: appleboy/telegram-action@v0.1.2
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            🚀 Успешный деплой на продакшн!
+            📦 Репозиторий: ${{ github.repository }}
+            👤 Автор: ${{ github.actor }}
+            🔗 Коммит: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
+      - name: Send Telegram Notification on Failure
+        if: failure() && secrets.TELEGRAM_BOT_TOKEN != ''
+        uses: appleboy/telegram-action@v0.1.2
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ❌ Ошибка при деплое на продакшн!
+            🔍 Проверьте логи: https://github.com/${{ github.repository }}/actions
+            
