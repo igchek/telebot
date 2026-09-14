@@ -1,8 +1,11 @@
 'use client'
 import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useAppSelector } from '@/store/hooks'
 
 const RootHeader = () => {
+    const isAuthenticated = useAppSelector((state)=>state.user.isAuthenticated)
+    if(isAuthenticated)return null
   return (
     <motion.div
         initial={{height:0}}

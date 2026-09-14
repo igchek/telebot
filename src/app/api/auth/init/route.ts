@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req: Request) {
     try {
         const body = await req.json()
+        console.log('req body is', body)
         
         if (!body) {
             return NextResponse.json({ error: 'No launch params provided' }, { status: 400 })
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
                 FirstName: telegramUser.first_name,
                 SecondName: telegramUser.last_name,
                 userName: telegramUser.username,
-                photo: telegramUser.photo_url,
+                // photo: telegramUser.photo_url,
             }
         })
 

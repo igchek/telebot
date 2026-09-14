@@ -1,6 +1,7 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { persistor } from "@/store/store";
 import { setUser } from "@/store/UserSlice";
 import { retrieveLaunchParams } from "@telegram-apps/sdk";
 import { useRouter } from "next/navigation";
@@ -15,14 +16,22 @@ export default function Home() {
 
   const handleStart = async()=>{
     setLoading(true)
-    // const initData = window.Telegram.WebApp.initData
+
     const initialData = retrieveLaunchParams()
-    dispatch(setUser(initialData))
+    console.log('initial data is',initialData)
+    if (initialData.tgWebAppData?.user)
+    {dispatch(setUser({
+      id:initialData.tgWebAppData.user.id,
+      first_name:initialData.tgWebAppData.user.first_name,
+      last_name:initialData.tgWebAppData.user.last_name,
+      username:initialData.tgWebAppData.user.username
+
+    }))}
     try {
       await fetch('/api/auth/init', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(data)
+        body:JSON.stringify(initialData)
       })
       
       router.push('/dashboard')
@@ -40,7 +49,7 @@ export default function Home() {
       "
     >
       {isAuthenticated && data ?
-        <h1>Привет, {data.initData?.user?.firstName}!</h1>
+        <h1>Привет, {data.first_name}!</h1>
         :
       <button
         className={`
@@ -51,7 +60,20 @@ export default function Home() {
         `}
         onClick={handleStart}
       >
-        
+        {isAuthenticated &&
+          <button
+            className="
+              flex justify-center items-center text-white font-bold text-lg transition-all
+              w-[50%] h-[50%] rounded 
+              bg-red-600
+            "
+            onClick={()=>{
+              persistor.purge().then(()=>{
+                router.push('/')
+              })
+            }}
+          >Reload</button>
+        }
         {loading ? 'Запуск...' : 'START' }
       </button>
       }

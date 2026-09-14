@@ -5,8 +5,8 @@ export interface TelegramUserPayload {
   initData?: {
     user?: {
       id: number
-      firstName: string
-      lastName?: string
+      first_name: string
+      last_name?: string
       username?: string
       [key: string]: unknown
     }
@@ -15,8 +15,15 @@ export interface TelegramUserPayload {
   [key: string]: unknown
 }
 
+interface UserData {
+    id:number
+    first_name:string
+    last_name?:string
+    username?:string
+}
+
 interface UserState {
-    data:TelegramUserPayload | null
+    data:UserData | null
     isAuthenticated:boolean
 }
 
@@ -29,13 +36,20 @@ export const userSlice = createSlice({
     name:'userReducer',
     initialState, 
     reducers:{
-        setUser:(state, action:PayloadAction<TelegramUserPayload|null>)=>{
+        setUser:(state, action:PayloadAction<UserData|null>)=>{
             if(action.payload){
-                state.data = action.payload
+                
+                state.data={
+                    id:action.payload.id,
+                    first_name:action.payload.first_name,
+                    last_name:action.payload.last_name,
+                    username:action.payload.username
+                }
+
                 state.isAuthenticated = true
             }
             else {
-                state.data = action.payload
+                state.data = null
                 state.isAuthenticated =false
             }
         },

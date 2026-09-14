@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import TelegramProvider from "@/components/TelegramProvider";
 import ReduxProvider from "@/store/ReduxProvider";
-import { useAppSelector } from "@/store/hooks";
 import RootHeader from "@/components/RootHeader";
 import { AnimatePresence } from "framer-motion";
 
@@ -25,7 +24,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isAuthenticated = useAppSelector((state)=>state.user.isAuthenticated)
   return (
     <html
       lang="en"
@@ -35,7 +33,7 @@ export default function RootLayout({ children }: Readonly<{
         <ReduxProvider>
           <TelegramProvider>
             <AnimatePresence>
-              {isAuthenticated && <RootHeader/>}
+              <RootHeader/>
               {children}
             </AnimatePresence>
           </TelegramProvider>
