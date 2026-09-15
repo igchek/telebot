@@ -3,7 +3,9 @@ name: Deploy to Production VPS
 on:
   push:
     branches: [ main ]
-
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 jobs:
   linting-and-typecheck:
     name: Lint & Typecheck
@@ -22,10 +24,33 @@ jobs:
         run: npx tsc --noEmit
       - name: Run Linter
         run: npm run lint
-
+  build-and-push:
+    name: Build and Push Docker Image
+    needs: linting-and-typecheck
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Log in into Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/next-server:latest
+          build-args: |
+            DATABASE_URL=postgresql://postgres:password@localhost:5432/svibes_db?schema=public
   deploy:
     name: Deploy to Production VPS
-    needs: linting-and-typecheck
+    needs: build-and-push
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -43,7 +68,8 @@ jobs:
           script: |
             cd /root/apps/svibes/telebot
             git pull
-            docker compose up -d --build
+            docker compose pull
+            docker compose up -d --force-recreate
             docker compose exec -T next-server npx prisma migrate deploy || echo "Migrations skipped or service name needs adjustment"
             docker compose ps
       - name: Send Telegram Notification Success

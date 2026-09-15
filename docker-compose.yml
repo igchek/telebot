@@ -15,17 +15,16 @@ services:
     restart: always
 
   next-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/igchek/telebot/next-server:latest
+    ports:
+      - "3000:3000"
     container_name: svibes_next_server
     environment:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/svibes_db?schema=public
       - NODE_ENV=production
-    ports:
-      - "3000:3000"
     depends_on:
       - postgres
+    restart: always
 
   bot:
     build:
